@@ -254,52 +254,15 @@ class MainWindow(QMainWindow):
                     platform_name = line[:line.find(',')].strip()
                     if platform_name.startswith('IGFX'):
                         self.platform_list.append(platform_name)
-            prePlatformName = self.ui.comboBoxPlatform.currentText()
+
             self.ui.comboBoxPlatform.clear()
             self.ui.comboBoxPlatform.addItems(self.platform_list)
-            if prePlatformName in self.platform_list :
-                self.ui.comboBoxPlatform.setCurrentText(prePlatformName)
-
             print('update platform list according to igfxfmid.h\n')
         except:
             pass
 
     @Slot()
-    def checkMainPageInput(self):
-        msgBox = QMessageBox()
-        if not self.ui.lineEditTestName.text() :
-            msgBox.setText("Please input a valid Test Name!")
-            msgBox.exec_()
-            return False
-        if not self.ui.lineEditMediaPath.text():
-            msgBox.setText("Please input a valid Command Path!")
-            msgBox.exec_()
-            return False
-        if not self.ui.lineEditRinginfoPath.text():
-            msgBox.setText("Please input a valid Ringinfo Path!")
-            msgBox.exec_()
-            return False
-        if not self.ui.lineEditDDIInputPath.text():
-            msgBox.setText("Please input a valid DDI Input Path!")
-            msgBox.exec_()
-            return False
-        if self.ui.lineEditPlatform.text() == "IGFX_UNKNOWN":
-            msgBox.setText("Please input a valid Platform!")
-            msgBox.exec_()
-            return False
-        if not self.ui.lineEditComponent.text():
-            msgBox.setText("Please input a valid Component!")
-            msgBox.exec_()
-            return False
-
-        return True
-
-    @Slot()
     def fillinput(self):
-
-        if False == self.checkMainPageInput():
-            return
-
         blank = []
         if not self.ui.lineEditRinginfoPath.text():
             self.ui.lineEditRinginfoPath.setStyleSheet('QLineEdit {background-color: rgb(255, 242, 0);}')
@@ -845,9 +808,6 @@ FrameNum = ([a-zA-Z0-9_\-]*)
     def generate_xml(self):
         if not self.command_info:
             pass
-        if self.platform == "IGFX_UNKNOWN":
-            self.show_message('Fail to generate the reference. \nPlease check the Platform setting in the main page.', '')
-            return
         self.split_dword()
         lines = ['<?xml version="1.0"?>\n']
         lines.append('<' + self.test_name + '>\n')
@@ -944,7 +904,7 @@ FrameNum = ([a-zA-Z0-9_\-]*)
         self.update_test_code()
         # get real Frame Number according to input files
         self.cpfiles()
-
+        
         if not (self.Component and self.GUID and self.Width and self.Height and self.inputpath and self.RawTileType and self.RawFormat and self.ResTileType and 
                 self.ResFormat and self.EncFunc):
             msgBox = QMessageBox()
@@ -970,7 +930,8 @@ FrameNum = ([a-zA-Z0-9_\-]*)
             self.read_command_info_from_xml()
             self.ui.tabWidget.setCurrentIndex(0)
             self.form.showcmdlist()
-
+        
+    
     @Slot()
     def cpfiles(self):
         l = [self.inputpath, self.ringinfo_path]
@@ -981,8 +942,7 @@ FrameNum = ([a-zA-Z0-9_\-]*)
                 os.makedirs(dstdir) # create directories, raise an error if it already exists
             for f in os.listdir(i):
                 full_f = os.path.join(i, f)
-                if full_f.find('.txt') != -1:
-                    shutil.copy(full_f, dstdir)
+                shutil.copy(full_f, dstdir)
 
     @Slot()
     def reject(self):
@@ -1016,7 +976,7 @@ FrameNum = {self.FrameNum}
              
             for f in os.listdir(self.inputpath):
                 pattern = re.search('^(\d)-0_(\d)?.*DDIEnc_(.*)Params_._Frame', f)
-
+                
                 if pattern:
                     length = len(pattern.groups())
                     FrameNo = str(int(pattern.group(1))-self.FrameNumdiff)
