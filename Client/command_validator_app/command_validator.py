@@ -1437,45 +1437,38 @@ FrameNum = ([a-zA-Z0-9_\-]*)
                     check = False
                 pre_dwords = pre_commands[cmd_idx].findall("dword")
                 pre_dwords_index = 0
-                
                 for dword_idx, dword in enumerate(command['dwords']):
-                    try:
-                        if not check:
-                            dword['check'] = 'N'
-                        else:
-                            dword['check'] = pre_dwords[pre_dwords_index].attrib['check']
-                            # when dword['NO'] is a single number or latter number, add index
-                            if dword['NO'] == pre_dwords[pre_dwords_index].attrib['NO'] or dword['NO'].endswith(pre_dwords[pre_dwords_index].attrib['NO']):
-                                pre_dwords_index += 1
-                            if dword['check'] == 'N':
-                                check = False
-                        pre_fields = list(pre_dwords[dword_idx])
-                        pre_fields_index = 0
-                        
-                        for field_idx, field in enumerate(dword['fields']):
-                            try:
-                                if command['name'] == 'MI_BATCH_BUFFER_START_CMD' and 'obj_fields' in field:
-                                    for obj_field_idx, obj_field in enumerate(field['obj_fields']):
-                                        if not check:
-                                            obj_field['CHECK'] = 'N'
-                                            continue
-                                        if pre_fields[pre_fields_index].tag != obj_field['obj_field_name']:
-                                            continue
-                                        obj_field['CHECK'] = pre_fields[pre_fields_index].attrib['CHECK']
-                                    continue
+                    if not check:
+                        dword['check'] = 'N'
+                    else:
+                        dword['check'] = pre_dwords[pre_dwords_index].attrib['check']
+                        # when dword['NO'] is a single number or latter number, add index
+                        if dword['NO'] == pre_dwords[pre_dwords_index].attrib['NO'] or dword['NO'].endswith(pre_dwords[pre_dwords_index].attrib['NO']):
+                            pre_dwords_index += 1
+                        if dword['check'] == 'N':
+                            check = False
+                    pre_fields = list(pre_dwords[dword_idx])
+                    pre_fields_index = 0
+                    for field_idx, field in enumerate(dword['fields']):
+                        if command['name'] == 'MI_BATCH_BUFFER_START_CMD' and 'obj_fields' in field:
+                            for obj_field_idx, obj_field in enumerate(field['obj_fields']):
                                 if not check:
-                                    field['CHECK'] = 'N'
-                                else:
-                                    if pre_fields_index >= len(pre_fields):
-                                        break
-                                    if pre_fields[pre_fields_index].tag != field['field_name']:
-                                        continue
-                                    field['CHECK'] = pre_fields[pre_fields_index].attrib['CHECK']
-                                    pre_fields_index += 1
-                            except:
-                                pass
-                    except:
-                        pass
+                                    obj_field['CHECK'] = 'N'
+                                    continue
+                                if pre_fields[pre_fields_index].tag != obj_field['obj_field_name']:
+                                    continue
+                                obj_field['CHECK'] = pre_fields[pre_fields_index].attrib['CHECK']
+                            continue
+                        if not check:
+                            field['CHECK'] = 'N'
+                        else:
+                            if pre_fields_index >= len(pre_fields):
+                                break
+                            if pre_fields[pre_fields_index].tag != field['field_name']:
+                                continue
+                            field['CHECK'] = pre_fields[pre_fields_index].attrib['CHECK']
+                            pre_fields_index += 1
+
 
         #for frame_idx, frame in enumerate(frames):
         #    for cmd_idx, cmd in enumerate(frame):
