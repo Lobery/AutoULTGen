@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1463</width>
-    <height>759</height>
+    <height>767</height>
    </rect>
   </property>
   <property name="acceptDrops">
@@ -171,6 +171,55 @@
             </widget>
            </item>
           </layout>
+         </item>
+        </layout>
+       </item>
+       <item row="1" column="0">
+        <layout class="QHBoxLayout" name="horizontalLayout_6">
+         <item>
+          <widget class="QCheckBox" name="checkBox_mi_noop">
+           <property name="text">
+            <string>Check MI_NOOP</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="checkBox_surface_state">
+           <property name="text">
+            <string>Check SURFACE_STATE</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="checkBox_hcp_pac_insert">
+           <property name="text">
+            <string>Check HCP_PAC_INSERT</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="checkBox_memoryobject">
+           <property name="text">
+            <string>Check MemoryObjectControlState</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="checkBox_cacheselect">
+           <property name="text">
+            <string>Check CacheSelect</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="checkBox_baseaddress">
+           <property name="text">
+            <string>Check BaseAddressIndexToMemoryObjectControlStateMocsTables</string>
+           </property>
+          </widget>
          </item>
         </layout>
        </item>

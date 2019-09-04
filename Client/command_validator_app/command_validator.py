@@ -56,6 +56,7 @@ class MainWindow(QMainWindow):
         self.pathlist = self.Addpath.ui.listWidget
         self.update_cmd_check_state = True
         self.supportComponent = ['Decode', 'Encode', 'VP']
+  
         #
         self.last_dir = ''
         self.ui.SelectMediaPath.clicked.connect(self.showAddpath)
@@ -257,7 +258,7 @@ class MainWindow(QMainWindow):
     @Slot()
     def checkGUID(self):
         self.GUID = self.ui.GUID_input.text()
-        if not self.read_test_cfg_cpp('GUID'):
+        if not self.read_test_cfg_cpp('GUID', False):
             
             self.ui.GUID_input.setText(self.pre_GUID)
 
@@ -917,8 +918,29 @@ FrameNum = ([a-zA-Z0-9_\-]*)
                         i_row += 1
 
             table.resizeColumnsToContents()
-            table.resizeRowsToContents()
+            table.resizeRowsToContents()              
 
+    def setSpecialCommandCheckState(self):
+        for frame in self.command_info:
+            for command in frame:
+                for area in self.form.specialareas:
+                    if area[3] == 'command':
+                        if command['name'].endswith(area[2]) and command['check'] == 'Y':
+                            area[1] = True
+                for dword in command['dwords']:
+                    for field in dword['fields']:
+                        if 'field_name' in field:
+                            for area in self.form.specialareas:
+                                if area[3] == 'field':
+                                    if field['field_name'].endswith(area[2]) and field['CHECK'] == 'Y':
+                                        area[1] = True
+        for area in self.form.specialareas:
+            if area[1]:
+                area[0].setCheckState(Qt.CheckState.Checked)
+            else:
+                area[0].setCheckState(Qt.CheckState.Unchecked)
+
+    # check according to command_info contents
     @Slot()
     def show_command_info(self):
         self.form.ui.tableWidgetCmd.clearContents()
@@ -941,7 +963,10 @@ FrameNum = ([a-zA-Z0-9_\-]*)
                 cmd = QTreeWidgetItem(frame)
                 #cmd.setText(0, str(command_idx) + ":" + command['name'])
                 cmd.setText(0, command['name'])
-                cmd.setCheckState(0,Qt.CheckState.Unchecked)
+                if self.command_info[frame_idx][command_idx]['check'] == 'Y':
+                    cmd.setCheckState(0,Qt.CheckState.Checked)
+                else:
+                    cmd.setCheckState(0,Qt.CheckState.Unchecked)
                 #self.command_info[frame_idx][command_idx]['check'] = 'N'
                 #if command['name'] in self.command_filter:
                 #    cmd.setCheckState(0, Qt.CheckState.Unchecked)
@@ -949,17 +974,19 @@ FrameNum = ([a-zA-Z0-9_\-]*)
                 #    cmd.setCheckState(0, Qt.CheckState.Checked)
                 cmd.setData(2, 1, {'frame_idx': frame_idx, 'cmd_idx': command_idx})
                 # 'CMD_HCP_VP9_RDOQ_STATE' has no dword
-                if len(command['dwords']) == 0:
-                    if self.command_info[frame_idx][command_idx]['check'] == 'Y':
-                        cmd.setCheckState(0, Qt.CheckState.Checked)
+                #if len(command['dwords']) == 0:
+                    #if self.command_info[frame_idx][command_idx]['check'] == 'Y':
+                        #cmd.setCheckState(0, Qt.CheckState.Checked)
                     #cmd.setCheckState(0, Qt.CheckState.Checked)
                     #self.command_info[frame_idx][command_idx]['check'] = 'Y'
                 for dword_idx in range(len(command['dwords'])):
                     dword = QTreeWidgetItem(cmd)
                     #print('dword_idx' + str(dword_idx))
                     dword.setText(0, 'dword' + command['dwords'][dword_idx]['NO'])
-                    if len(command['dwords'][dword_idx]['fields'])==0:
-                        dword.setCheckState(0,Qt.CheckState.Unchecked)   
+                    if cmd.checkState(0) == Qt.CheckState.Checked:
+                        dword.setCheckState(0,Qt.CheckState.Checked)   
+                    else:
+                        dword.setCheckState(0,Qt.CheckState.Unchecked)
                     for field in command['dwords'][dword_idx]['fields']:
                         # field in MI_BATCH_BUFFER_START_CMD command may have a different structure  
                         if command['name'] == "MI_BATCH_BUFFER_START_CMD" and 'obj_fields' in field:
@@ -1106,7 +1133,8 @@ FrameNum = ([a-zA-Z0-9_\-]*)
             # self.test_class_name = root.get('name')
             for command in frame:
                 info = {'dwords': []}
-                if command.attrib['name'] in ('MI_NOOP_CMD', 'HCP_PAK_INSERT_OBJECT_CMD') or command.attrib['name'].endswith('_SURFACE_STATE_CMD'):
+                if command.attrib['name'] in ('MI_NOOP_CMD', 'HCP_PAK_INSERT_OBJECT_CMD'):
+                #if command.attrib['name'] in ('MI_NOOP_CMD', 'HCP_PAK_INSERT_OBJECT_CMD') or command.attrib['name'].endswith('_SURFACE_STATE_CMD'):
                     info['check'] = 'N'
                 else:
                     info['check'] = 'Y'
@@ -1404,6 +1432,7 @@ FrameNum = ([a-zA-Z0-9_\-]*)
                     ret = msgBox.exec();
                     if ret == QMessageBox.Yes:
                         self.loadCheckState()
+            self.setSpecialCommandCheckState()
             self.show_command_info()
             self.form.showcmdlist()
         self.update_cmd_check_state = True
@@ -1685,7 +1714,7 @@ FrameNum = {self.FrameNum}
 
 
 
-    def read_test_cfg_cpp(self, name):
+    def read_test_cfg_cpp(self, name, flag = True):
         component = self.component.lower()
         if component == 'encode' or component == 'decode' or component == 'vp':
             f_integrated_cfg_cpp = os.path.join(os.path.dirname(self.workspace), component + '_integrated_test_cfg.cpp')
@@ -1730,7 +1759,7 @@ FrameNum = {self.FrameNum}
                             return True
                         elif msgBox.clickedButton() == buttonN:
                             return False
-            else:
+            elif flag:
                 for item in os.listdir(self.workspace):
                     if os.path.isdir(os.path.join(self.workspace, item)) and item == self.test_name:
                         msgBox = QMessageBox()
@@ -1753,10 +1782,24 @@ class FormCommandInfo(QWidget):
         self.mode = 'hex'
         self.first = True
         self.row_command_map = []
+
+        self.specialareas = [[self.ui.checkBox_surface_state,False,'_SURFACE_STATE_CMD','command'],
+                        [self.ui.checkBox_mi_noop,False,'MI_NOOP_CMD','command'],
+                        [self.ui.checkBox_hcp_pac_insert,False,'HCP_PAK_INSERT_OBJECT_CMD','command'],
+                        [self.ui.checkBox_baseaddress,False,'BaseAddressIndexToMemoryObjectControlStateMocsTables','field'],
+                        [self.ui.checkBox_cacheselect,False,'CacheSelect','field'],
+                        [self.ui.checkBox_memoryobject,False,'MemoryObjectControlState','field']]
+
         self.ui.checkBoxHex.stateChanged.connect(self.update_data_mode_hex)
         self.ui.checkBoxDec.stateChanged.connect(self.update_data_mode_dec)
         self.ui.checkBoxBinary.stateChanged.connect(self.update_data_mode_bin)
         self.ui.checkBoxReserved.stateChanged.connect(self.update_reserve_show)
+        self.ui.checkBox_surface_state.stateChanged.connect(self.update_special_command)
+        self.ui.checkBox_mi_noop.stateChanged.connect(self.update_special_command)
+        self.ui.checkBox_hcp_pac_insert.stateChanged.connect(self.update_special_command)
+        self.ui.checkBox_baseaddress.stateChanged.connect(self.update_special_field)
+        self.ui.checkBox_cacheselect.stateChanged.connect(self.update_special_field)
+        self.ui.checkBox_memoryobject.stateChanged.connect(self.update_special_field)
         self.current_item = None
         self.modifylist = []
         #used for loading cmdlist history
@@ -1780,6 +1823,56 @@ class FormCommandInfo(QWidget):
         self.ui.treeWidgetCmd.itemClicked.connect(self.save)
         
         
+    def update_special_command(self):
+        if not self.main_window.command_info:
+            return
+        for index, area in enumerate(self.specialareas):
+            if (area[0].checkState() == Qt.CheckState.Checked and area[1] == False) or (area[0].checkState() == Qt.CheckState.Unchecked and area[1] == True):
+                cmd_name = area[2]
+                area[1] = not area[1]
+                state = area[1]
+                break
+        # update check state in command_info & tree widget
+        treeRoot = self.ui.treeWidgetCmd
+        for frame_idx, frame in enumerate(self.main_window.command_info):
+            frameWidget = treeRoot.topLevelItem(0).child(frame_idx)
+            for cmd_idx, command in enumerate(frame):
+                if command['name'].endswith(cmd_name):
+                    cmdWidget = frameWidget.child(cmd_idx)
+                    if state:
+                        cmdWidget.setCheckState(0, Qt.CheckState.Checked)
+                    else:
+                        cmdWidget.setCheckState(0, Qt.CheckState.Unchecked)
+                    self.update_tree_checkstate(cmdWidget)
+
+
+    def update_special_field(self):
+        if not self.main_window.command_info:
+            return
+        for index, area in enumerate(self.specialareas):
+            if (area[0].checkState() == Qt.CheckState.Checked and area[1] == False) or (area[0].checkState() == Qt.CheckState.Unchecked and area[1] == True):
+                field_name = area[2]
+                area[1] = not area[1]
+                state = area[1]
+                break
+        # update check state in command_info & tree widget
+        treeRoot = self.ui.treeWidgetCmd
+        for frame_idx, frame in enumerate(self.main_window.command_info):
+            frameWidget = treeRoot.topLevelItem(0).child(frame_idx)
+            for cmd_idx, command in enumerate(frame):
+                cmdWidget = frameWidget.child(cmd_idx)
+                for dword_idx, dword in enumerate(command['dwords']):
+                    dwordWidget = cmdWidget.child(dword_idx)
+                    for field_idx, field in enumerate(dword['fields']):
+                        # NO SPECIAL FIELD IN MI_BATCH_BUFFER_CMD 
+                        if 'field_name' in field and field['field_name'].endswith(field_name):
+                            fieldWidget = dwordWidget.child(field_idx)
+                            if state:
+                                fieldWidget.setCheckState(0, Qt.CheckState.Checked)
+                            else:
+                                fieldWidget.setCheckState(0, Qt.CheckState.Unchecked)
+                            self.update_tree_checkstate(fieldWidget)
+
 
     def show_message(self, inf, title):
         msgBox = QMessageBox()
@@ -1908,7 +2001,7 @@ class FormCommandInfo(QWidget):
         self.main_window.command_info = self.info
 
     @Slot(QTreeWidgetItem, int)
-    def update_tree_checkstate(self, item, column):
+    def update_tree_checkstate(self, item, column = 0):
         if not self.main_window.update_cmd_check_state:
             return
         # get frame index

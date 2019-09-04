@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file '.\command_info.ui',
 # licensing of '.\command_info.ui' applies.
 #
-# Created: Tue Aug 20 13:07:22 2019
+# Created: Tue Sep  3 14:55:06 2019
 #      by: pyside2-uic  running on PySide2 5.12.0
 #
 # WARNING! All changes made in this file will be lost!
@@ -13,7 +13,7 @@ from PySide2 import QtCore, QtGui, QtWidgets
 class Ui_FormCommandInfo(object):
     def setupUi(self, FormCommandInfo):
         FormCommandInfo.setObjectName("FormCommandInfo")
-        FormCommandInfo.resize(1463, 759)
+        FormCommandInfo.resize(1463, 767)
         FormCommandInfo.setAcceptDrops(False)
         self.gridLayout_2 = QtWidgets.QGridLayout(FormCommandInfo)
         self.gridLayout_2.setObjectName("gridLayout_2")
@@ -100,6 +100,28 @@ class Ui_FormCommandInfo(object):
         self.horizontalLayout_2.setStretch(2, 1)
         self.verticalLayout.addLayout(self.horizontalLayout_2)
         self.gridLayout.addLayout(self.verticalLayout, 0, 0, 1, 1)
+        self.horizontalLayout_6 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_6.setObjectName("horizontalLayout_6")
+        self.checkBox_mi_noop = QtWidgets.QCheckBox(self.All)
+        self.checkBox_mi_noop.setObjectName("checkBox_mi_noop")
+        self.horizontalLayout_6.addWidget(self.checkBox_mi_noop)
+        self.checkBox_surface_state = QtWidgets.QCheckBox(self.All)
+        self.checkBox_surface_state.setChecked(True)
+        self.checkBox_surface_state.setObjectName("checkBox_surface_state")
+        self.horizontalLayout_6.addWidget(self.checkBox_surface_state)
+        self.checkBox_hcp_pac_insert = QtWidgets.QCheckBox(self.All)
+        self.checkBox_hcp_pac_insert.setObjectName("checkBox_hcp_pac_insert")
+        self.horizontalLayout_6.addWidget(self.checkBox_hcp_pac_insert)
+        self.checkBox_memoryobject = QtWidgets.QCheckBox(self.All)
+        self.checkBox_memoryobject.setObjectName("checkBox_memoryobject")
+        self.horizontalLayout_6.addWidget(self.checkBox_memoryobject)
+        self.checkBox_cacheselect = QtWidgets.QCheckBox(self.All)
+        self.checkBox_cacheselect.setObjectName("checkBox_cacheselect")
+        self.horizontalLayout_6.addWidget(self.checkBox_cacheselect)
+        self.checkBox_baseaddress = QtWidgets.QCheckBox(self.All)
+        self.checkBox_baseaddress.setObjectName("checkBox_baseaddress")
+        self.horizontalLayout_6.addWidget(self.checkBox_baseaddress)
+        self.gridLayout.addLayout(self.horizontalLayout_6, 1, 0, 1, 1)
         self.stackedWidget.addWidget(self.All)
         self.cmdlist = QtWidgets.QWidget()
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
@@ -178,6 +200,12 @@ class Ui_FormCommandInfo(object):
         self.checkBoxBinary.setText(QtWidgets.QApplication.translate("FormCommandInfo", "Binary", None, -1))
         self.pushButtonSCL.setText(QtWidgets.QApplication.translate("FormCommandInfo", "Show CMD List", None, -1))
         self.pushButtonGen.setText(QtWidgets.QApplication.translate("FormCommandInfo", "Generate", None, -1))
+        self.checkBox_mi_noop.setText(QtWidgets.QApplication.translate("FormCommandInfo", "Check MI_NOOP", None, -1))
+        self.checkBox_surface_state.setText(QtWidgets.QApplication.translate("FormCommandInfo", "Check SURFACE_STATE", None, -1))
+        self.checkBox_hcp_pac_insert.setText(QtWidgets.QApplication.translate("FormCommandInfo", "Check HCP_PAC_INSERT", None, -1))
+        self.checkBox_memoryobject.setText(QtWidgets.QApplication.translate("FormCommandInfo", "Check MemoryObjectControlState", None, -1))
+        self.checkBox_cacheselect.setText(QtWidgets.QApplication.translate("FormCommandInfo", "Check CacheSelect", None, -1))
+        self.checkBox_baseaddress.setText(QtWidgets.QApplication.translate("FormCommandInfo", "Check BaseAddressIndexToMemoryObjectControlStateMocsTables", None, -1))
         self.tableWidgetCmdlist.horizontalHeaderItem(0).setText(QtWidgets.QApplication.translate("FormCommandInfo", "Command", None, -1))
         self.tableWidgetCmdlist.horizontalHeaderItem(1).setText(QtWidgets.QApplication.translate("FormCommandInfo", "Class", None, -1))
         self.tableWidgetCmdlist.horizontalHeaderItem(2).setText(QtWidgets.QApplication.translate("FormCommandInfo", "HitCount", None, -1))
