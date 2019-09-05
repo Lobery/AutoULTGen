@@ -35,16 +35,34 @@
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="3,10">
            <item>
-            <widget class="QTreeWidget" name="treeWidgetCmd">
-             <property name="headerHidden">
-              <bool>true</bool>
-             </property>
-             <column>
-              <property name="text">
-               <string notr="true">1</string>
-              </property>
-             </column>
-            </widget>
+            <layout class="QVBoxLayout" name="verticalLayout_2">
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_7">
+               <item>
+                <widget class="QLineEdit" name="lineEditSearch"/>
+               </item>
+               <item>
+                <widget class="QPushButton" name="pushButtonSearch">
+                 <property name="text">
+                  <string>Search</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <widget class="QTreeWidget" name="treeWidgetCmd">
+               <property name="headerHidden">
+                <bool>true</bool>
+               </property>
+               <column>
+                <property name="text">
+                 <string notr="true">1</string>
+                </property>
+               </column>
+              </widget>
+             </item>
+            </layout>
            </item>
            <item>
             <widget class="QTableWidget" name="tableWidgetCmd">

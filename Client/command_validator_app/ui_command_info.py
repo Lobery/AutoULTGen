@@ -1,9 +1,9 @@
 ﻿# -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '.\command_info.ui',
-# licensing of '.\command_info.ui' applies.
+# Form implementation generated from reading ui file './command_info.ui',
+# licensing of './command_info.ui' applies.
 #
-# Created: Tue Sep  3 14:55:06 2019
+# Created: Wed Sep  4 15:42:13 2019
 #      by: pyside2-uic  running on PySide2 5.12.0
 #
 # WARNING! All changes made in this file will be lost!
@@ -32,11 +32,23 @@ class Ui_FormCommandInfo(object):
         self.verticalLayout.setObjectName("verticalLayout")
         self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_3.setObjectName("horizontalLayout_3")
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self.horizontalLayout_7 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_7.setObjectName("horizontalLayout_7")
+        self.lineEditSearch = QtWidgets.QLineEdit(self.All)
+        self.lineEditSearch.setObjectName("lineEditSearch")
+        self.horizontalLayout_7.addWidget(self.lineEditSearch)
+        self.pushButtonSearch = QtWidgets.QPushButton(self.All)
+        self.pushButtonSearch.setObjectName("pushButtonSearch")
+        self.horizontalLayout_7.addWidget(self.pushButtonSearch)
+        self.verticalLayout_2.addLayout(self.horizontalLayout_7)
         self.treeWidgetCmd = QtWidgets.QTreeWidget(self.All)
         self.treeWidgetCmd.setHeaderHidden(True)
         self.treeWidgetCmd.setObjectName("treeWidgetCmd")
         self.treeWidgetCmd.headerItem().setText(0, "1")
-        self.horizontalLayout_3.addWidget(self.treeWidgetCmd)
+        self.verticalLayout_2.addWidget(self.treeWidgetCmd)
+        self.horizontalLayout_3.addLayout(self.verticalLayout_2)
         self.tableWidgetCmd = QtWidgets.QTableWidget(self.All)
         self.tableWidgetCmd.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
         self.tableWidgetCmd.setObjectName("tableWidgetCmd")
@@ -183,6 +195,7 @@ class Ui_FormCommandInfo(object):
 
     def retranslateUi(self, FormCommandInfo):
         FormCommandInfo.setWindowTitle(QtWidgets.QApplication.translate("FormCommandInfo", "Form", None, -1))
+        self.pushButtonSearch.setText(QtWidgets.QApplication.translate("FormCommandInfo", "Search", None, -1))
         self.tableWidgetCmd.horizontalHeaderItem(0).setText(QtWidgets.QApplication.translate("FormCommandInfo", "Command", None, -1))
         self.tableWidgetCmd.horizontalHeaderItem(1).setText(QtWidgets.QApplication.translate("FormCommandInfo", "Dword", None, -1))
         self.tableWidgetCmd.horizontalHeaderItem(2).setText(QtWidgets.QApplication.translate("FormCommandInfo", "Field", None, -1))

@@ -955,7 +955,6 @@ FrameNum = ([a-zA-Z0-9_\-]*)
         header = self.form.ui.treeWidgetCmd.header()
         header.setSectionResizeMode(QHeaderView.ResizeToContents)
         header.setStretchLastSection(False)
-
         test = QTreeWidgetItem(tree)
         test.setText(0, self.test_name)
         for frame_idx in range(len(self.command_info)):
@@ -965,8 +964,8 @@ FrameNum = ([a-zA-Z0-9_\-]*)
             frame.setData(2, 1, {'frame_idx': frame_idx, 'cmd_idx': 'all'})
             for command_idx, command in enumerate(self.command_info[frame_idx]):
                 cmd = QTreeWidgetItem(frame)
-                #cmd.setText(0, str(command_idx) + ":" + command['name'])
-                cmd.setText(0, command['name'])
+                cmd.setText(0, str(command_idx) + ":" + command['name'])
+                #cmd.setText(0, command['name'])
                 if self.command_info[frame_idx][command_idx]['check'] == 'Y':
                     cmd.setCheckState(0,Qt.CheckState.Checked)
                 else:
@@ -1781,11 +1780,13 @@ class FormCommandInfo(QWidget):
         self.main_window = main_window
         self.ui.pushButtonGen.clicked.connect(self.save)
         self.ui.pushButtonGen.clicked.connect(self.main_window.generate_xml)
+        self.ui.pushButtonSearch.clicked.connect(self.search_command)
         self.current_frame = 0
         self.current_command = ''
         self.mode = 'hex'
         self.first = True
         self.row_command_map = []
+        
 
         self.specialareas = [[self.ui.checkBox_surface_state,False,'_SURFACE_STATE_CMD','command'],
                         [self.ui.checkBox_mi_noop,False,'MI_NOOP_CMD','command'],
@@ -1827,6 +1828,20 @@ class FormCommandInfo(QWidget):
         self.ui.treeWidgetCmd.itemClicked.connect(self.main_window.show_command_table)
         self.ui.treeWidgetCmd.itemClicked.connect(self.save)
         
+    def search_command(self):
+        if not self.main_window.command_info:
+            return
+        treeRoot = self.ui.treeWidgetCmd
+        search_condition = self.ui.lineEditSearch.text().strip().upper()
+        for frame_idx, frame in enumerate(self.main_window.command_info):
+            frameWidget = treeRoot.topLevelItem(0).child(frame_idx)
+            for cmd_idx, command in enumerate(frame):
+                cmdWidget = frameWidget.child(cmd_idx)
+                if len(search_condition) != 0 and command['name'].find(search_condition) < 0:
+                    cmdWidget.setHidden(True)
+                else:
+                    cmdWidget.setHidden(False)
+
         
     def update_special_command(self):
         if not self.main_window.command_info:
@@ -1849,6 +1864,8 @@ class FormCommandInfo(QWidget):
                     else:
                         cmdWidget.setCheckState(0, Qt.CheckState.Unchecked)
                     self.update_tree_checkstate(cmdWidget)
+        if self.current_item:
+            self.main_window.show_command_table(self.current_item)
 
 
     def update_special_field(self):
@@ -1877,7 +1894,8 @@ class FormCommandInfo(QWidget):
                             else:
                                 fieldWidget.setCheckState(0, Qt.CheckState.Unchecked)
                             self.update_tree_checkstate(fieldWidget)
-
+        if self.current_item:
+            self.main_window.show_command_table(self.current_item)
 
     def show_message(self, inf, title):
         msgBox = QMessageBox()
@@ -2026,7 +2044,7 @@ class FormCommandInfo(QWidget):
         frame_idx = int(frame_item.text(0)[5:])
         
         # MI_BATCH_BUFFER_START_CMD can only be unchecked if no cmd in its unit is checked
-        if item.text(0) == 'MI_BATCH_BUFFER_START_CMD' and item.checkState(0) == Qt.CheckState.Unchecked:
+        if item.text(0).endswith('MI_BATCH_BUFFER_START_CMD') and item.checkState(0) == Qt.CheckState.Unchecked:
             if not self.uncheck_MI_BATCH_BUFFER_START_CMD(item, frame_idx):
                 item.setCheckState(0, Qt.CheckState.Checked)
                 return
@@ -2124,11 +2142,11 @@ class FormCommandInfo(QWidget):
         for i in range(command_idx+1, frame.childCount()):
             if frame.child(i).checkState(0) == Qt.CheckState.Checked:
                 return False
-            if frame.child(i).text(0) == 'MI_BATCH_BUFFER_END_CMD':
+            if frame.child(i).text(0).endswith('MI_BATCH_BUFFER_END_CMD'):
                 require_endcmd_num -= 1
                 if require_endcmd_num == 0:
                     return True
-            if frame.child(i).text(0) == 'MI_BATCH_BUFFER_START_CMD':
+            if frame.child(i).text(0).endswith('MI_BATCH_BUFFER_START_CMD'):
                 require_endcmd_num += 1
         return True
 
@@ -2144,9 +2162,11 @@ class FormCommandInfo(QWidget):
             command_idx = frame.indexOfChild(item_point)
         stack = []
         for i in range(command_idx):
-            if frame.child(i).text(0) == 'MI_BATCH_BUFFER_START_CMD':
+            if frame.child(i).text(0).endswith('MI_BATCH_BUFFER_START_CMD'):
                 stack.append(i)
-            elif frame.child(i).text(0) == 'MI_BATCH_BUFFER_END_CMD':
+            elif frame.child(i).text(0).endswith('MI_BATCH_BUFFER_END_CMD'):
+                if len(stack) == 0:
+                    return
                 del stack[-1]
         for i in stack:
             if frame.child(i).checkState(0) == Qt.CheckState.Unchecked:
