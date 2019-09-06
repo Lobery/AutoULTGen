@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>UpdateConflictInfo</class>
+ <widget class="QWidget" name="UpdateConflictInfo">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>465</width>
+    <height>287</height>
+   </rect>
+  </property>
+  <property name="acceptDrops">
+   <bool>false</bool>
+  </property>
+  <property name="windowTitle">
+   <string>Update Conflict Info</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="QTableWidget" name="tableWidget">
+       <column>
+        <property name="text">
+         <string>frame Index</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>command Index</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>old name</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>use old</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>new name</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>use new</string>
+        </property>
+       </column>
+      </widget>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item alignment="Qt::AlignHCenter">
+        <widget class="QPushButton" name="pushButtonDiscard">
+         <property name="text">
+          <string>Discard</string>
+         </property>
+        </widget>
+       </item>
+       <item alignment="Qt::AlignHCenter">
+        <widget class="QPushButton" name="pushButtonUpdate">
+         <property name="text">
+          <string>Update</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

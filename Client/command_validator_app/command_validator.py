@@ -10,10 +10,12 @@ from PySide2.QtWidgets import *
 from PySide2.QtGui import QColor, QKeySequence, QValidator, QRegExpValidator
 from lxml import etree
 import xml.etree.ElementTree as ET
+from PySide2 import QtCore
 #----------
 from ui_command_info import Ui_FormCommandInfo
 from ui_mainwindow import Ui_mainWindow
 from ui_Addpath import Ui_Addpath
+from ui_UpdateConflictInfo import Ui_UpdateConflictInfo
 from get_enum_member import GetEnumMember
 from extended_combobox import ExtendedComboBox
 from htoxml.cmdfinder import CmdFinder
@@ -53,10 +55,14 @@ class MainWindow(QMainWindow):
         self.pre_component1 = ''
         self.form = FormCommandInfo(self)
         self.Addpath = Addpath(self)
+        self.UpdateConflictInfo = UpdateConflictInfo(self)
         self.pathlist = self.Addpath.ui.listWidget
         self.update_cmd_check_state = True
         self.supportComponent = ['Decode', 'Encode', 'VP']
-  
+        self.differentCommandList = []
+        self.conflictCheckBox = []
+        self.ignoreConflictCheckBox = {}
+        self.differentCommandContent = []
         #
         self.last_dir = ''
         self.ui.SelectMediaPath.clicked.connect(self.showAddpath)
@@ -67,6 +73,8 @@ class MainWindow(QMainWindow):
         self.ui.lineEditDDIInputPath.textChanged.connect(partial(self.changebg,'DDIInput'))
         self.ui.comboBoxPlatform.currentTextChanged.connect(partial(self.selectbox,'Platform'))
         self.ui.comboBoxComponent.currentTextChanged.connect(partial(self.selectbox,'Component'))
+        
+        self.ui.lineEditTestName.setText('EncodeHevcCQP')
 
 
         self.ui.tabWidget.setCurrentIndex(0)
@@ -291,6 +299,52 @@ class MainWindow(QMainWindow):
         self.pathlist.clear()
         if self.ui.lineEditMediaPath.text():
             self.pathlist.addItems(self.ui.lineEditMediaPath.text().split(';'))
+
+    def updateConflictCheckBox(self, row, index, text):
+        if self.conflictCheckBox[row][index] in self.ignoreConflictCheckBox:
+            del self.ignoreConflictCheckBox[self.conflictCheckBox[row][index]]
+            return
+        checkBox = self.conflictCheckBox[row][1-index]
+        self.ignoreConflictCheckBox[checkBox] = 1
+        if checkBox.checkState() == Qt.CheckState.Checked:
+            checkBox.setCheckState(Qt.CheckState.Unchecked)
+        else:
+            checkBox.setCheckState(Qt.CheckState.Checked)
+        if index == 0:
+            if self.conflictCheckBox[row][index].checkState(0) == Qt.CheckState.Checked:
+                self.differentCommandList[row]['use'] = 'old'
+            else:
+                self.differentCommandList[row]['use'] = 'new'
+        else:
+            if self.conflictCheckBox[row][index].checkState(0) == Qt.CheckState.Checked:
+                self.differentCommandList[row]['use'] = 'new'
+            else:
+                self.differentCommandList[row]['use'] = 'old'
+
+    def showUpdateConflictInfo(self):
+        self.UpdateConflictInfo.show()
+        self.UpdateConflictInfo.activateWindow()
+        table = self.UpdateConflictInfo.ui.tableWidget
+        table.clearContents()
+        table.setRowCount(0)
+        for idx, diff_cmd in enumerate(self.differentCommandList):
+            row = idx
+            table.insertRow(row)
+            table.setItem(row, 0, QTableWidgetItem(str(diff_cmd['frame_idx'])))
+            table.setItem(row, 1, QTableWidgetItem(str(diff_cmd['cmd_idx'])))
+            table.setItem(row, 2, QTableWidgetItem(diff_cmd['old_command_name']))
+            checkBoxOld = QCheckBox()
+            checkBoxOld.setCheckState(Qt.CheckState.Checked)
+            checkBoxOld.stateChanged.connect(partial(self.updateConflictCheckBox, row, 0))
+            table.setCellWidget(row, 3, checkBoxOld)
+            table.setItem(row, 4, QTableWidgetItem(diff_cmd['new_command_name']))
+            checkBoxNew = QCheckBox()
+            checkBoxNew.setCheckState(Qt.CheckState.Unchecked)
+            checkBoxNew.stateChanged.connect(partial(self.updateConflictCheckBox, row, 1))
+            table.setCellWidget(row, 5, checkBoxNew)
+            self.conflictCheckBox.append([checkBoxOld, checkBoxNew])
+        table.resizeColumnsToContents()
+        table.resizeRowsToContents()       
     
     @Slot()
     def selectbox(self, name, text):
@@ -1429,12 +1483,16 @@ FrameNum = ([a-zA-Z0-9_\-]*)
             self.read_command_info_from_xml(False)        
             if self.sameTest:
                 if self.sameCommandList():
-                    msgBox = QMessageBox()
-                    msgBox.setText("Do you want to reload previous check state?")
-                    msgBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-                    ret = msgBox.exec();
-                    if ret == QMessageBox.Yes:
-                        self.loadCheckState()
+                    if self.differentCommandList:
+                        self.showUpdateConflictInfo()
+                        return
+                    else:
+                        msgBox = QMessageBox()
+                        msgBox.setText("Do you want to reload previous check state?")
+                        msgBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+                        ret = msgBox.exec();
+                        if ret == QMessageBox.Yes:
+                            self.loadCheckState()
             self.setSpecialCommandCheckState()
             self.show_command_info()
             self.form.showcmdlist()
@@ -1442,6 +1500,7 @@ FrameNum = ([a-zA-Z0-9_\-]*)
     
     # RETURN TRUE if current command_info has same frame and same command with previous command_info loaded from generated xml
     def sameCommandList(self):
+        self.differentCommandList = []
         testname = self.ui.lineEditTestName.text()
         fileFullName = self.output_path + '\\' + testname + 'Reference.xml'
         if not os.path.exists(fileFullName):
@@ -1458,7 +1517,40 @@ FrameNum = ([a-zA-Z0-9_\-]*)
             # check cmd name
             for cmd_idx, cmd in enumerate(frame):
                 if cmd.attrib['name'] != self.command_info[frame_idx][cmd_idx]['name']:
-                    return False
+                    flag = False
+                    new_command = self.command_info[frame_idx][cmd_idx]['name'].split("_")
+                    old_command = cmd.attrib['name'].split("_")   
+                    while new_command and new_command[0] in ('CMD','STATE'):
+                        del new_command[0]
+                    while new_command and new_command[-1] in ('CMD','STATE'):
+                        del new_command[-1]
+                    while old_command and old_command[0] in ('CMD','STATE'):
+                        del old_command[0]
+                    while old_command and old_command[-1] in ('CMD','STATE'):
+                        del old_command[-1]
+                    new_command = "_".join(new_command)
+                    old_command = "_".join(old_command)
+                    if new_command == old_command:
+                        flag = True
+                    # VDENC_AVC_COSTS_STATE_CMD & CMD_VDENC_AVC_COST_STATE
+                    if 'COST' in new_command:
+                        if new_command.replace('COSTS','COST') == old_command.replace('COSTS','COST'):
+                            flag = True
+                    # VDENC_HEVC_VP9_IMG_STATE_CMD & CMD_VDENC_HEVC_VP9_IMAGE_STATE
+                    if 'IMG' in new_command or 'IMAGE' in new_command:
+                        if new_command.replace('IMG','IMAGE') == old_command.replace('IMG','IMAGE'):
+                            flag = True
+                    # HEVC_VP9_RDOQ_STATE_CMD & CMD_HCP_VP9_RDOQ_STATE
+                    if sorted([old_command,new_command]) == ['HCP_VP9_RDOQ','HEVC_VP9_RDOQ']:
+                        flag = True
+                    if not flag:
+                        return False
+                    else:
+                        self.differentCommandList.append({'old_command_name':cmd.attrib['name'],
+                                                          'new_command_name':self.command_info[frame_idx][cmd_idx]['name'],
+                                                          'frame_idx':frame_idx,
+                                                          'cmd_idx':cmd_idx,
+                                                          'use':'old'})
         return True
 
     def loadCheckState(self):
@@ -1466,6 +1558,7 @@ FrameNum = ([a-zA-Z0-9_\-]*)
         fileFullName = self.output_path + '\\' + testname + 'Reference.xml'
         if not os.path.exists(fileFullName):
             return
+        self.differentCommandContent = []
         tree = ET.parse(fileFullName) 
         root = tree.getroot()       
         pre_frames = root.findall(".//Frame")
@@ -1473,13 +1566,28 @@ FrameNum = ([a-zA-Z0-9_\-]*)
             pre_frame = pre_frames[frame_idx]
             pre_commands = pre_frame.findall("CMD")
             for cmd_idx, command in enumerate(frame):
+                for conflict_idx, conflict in enumerate(self.differentCommandList):
+                    if conflict['cmd_idx'] == cmd_idx and conflict['frame_idx'] == frame_idx:
+                        if conflict['use'] =='old':
+                            command['name'] = conflict['old_command_name']
+                        else:
+                            command['name'] = conflict['new_command_name']
                 check = True
                 command['check'] = pre_commands[cmd_idx].attrib['check']
                 if command['check'] == 'N':
                     check = False
                 pre_dwords = pre_commands[cmd_idx].findall("dword")
                 pre_dwords_index = 0
+                same_command_content = True
+                if command['dwords'] and command['dwords'][-1]['NO'].split('_')[-1] != str(len(pre_dwords)-1):
+                    same_command_content = False
+                    self.differentCommandContent.append({'frame_idx':frame_idx,
+                                                         'command_idx':cmd_idx,
+                                                         'command_name':command['name'],
+                                                         'message':'Different dowrds'})
                 for dword_idx, dword in enumerate(command['dwords']):
+                    if pre_dwords_index >= len(pre_dwords):
+                        break
                     if not check:
                         dword['check'] = 'N'
                     else:
@@ -1491,27 +1599,89 @@ FrameNum = ([a-zA-Z0-9_\-]*)
                             check = False
                     pre_fields = list(pre_dwords[dword_idx])
                     pre_fields_index = 0
-                    for field_idx, field in enumerate(dword['fields']):
-                        if command['name'] == 'MI_BATCH_BUFFER_START_CMD' and 'obj_fields' in field:
-                            for obj_field_idx, obj_field in enumerate(field['obj_fields']):
-                                if not check:
-                                    obj_field['CHECK'] = 'N'
+                    current_fields = []
+                    for field in dword['fields']:
+                        if 'obj_fields' in field:
+                            for obj_field in field['obj_fields']:
+                                if obj_field['obj_field_name'].startswith('Reserve'):
                                     continue
-                                if pre_fields[pre_fields_index].tag != obj_field['obj_field_name']:
-                                    continue
-                                obj_field['CHECK'] = pre_fields[pre_fields_index].attrib['CHECK']
-                            continue
-                        if not check:
-                            field['CHECK'] = 'N'
+                                current_fields.append(obj_field)
                         else:
-                            if pre_fields_index >= len(pre_fields):
-                                break
-                            if pre_fields[pre_fields_index].tag != field['field_name']:
+                            if field['field_name'].startswith('Reserve'):
                                 continue
-                            field['CHECK'] = pre_fields[pre_fields_index].attrib['CHECK']
-                            pre_fields_index += 1
+                            current_fields.append(field)
+                    if not check:
+                        for field in current_fields:
+                            field['CHECK'] = 'N'
+                    else:
+                        flag = True
+                        if len(pre_fields) != len(current_fields):
+                            flag = False
+                        for idx, field in enumerate(current_fields):
+                            if idx >= len(pre_fields):
+                                flag = False
+                                break
+                            if 'obj_field_name' in field and field['obj_field_name'] != pre_fields[idx].tag:
+                                flag = False
+                                continue
+                            if 'field_name' in field and field['field_name'] != pre_fields[idx].tag:
+                                flag = False
+                                continue
+                            field['CHECK'] = pre_fields[idx].attrib['CHECK']
+                        if not flag and same_command_content:
+                            same_command_content = False
+                            self.differentCommandContent.append({'frame_idx':frame_idx,
+                                                                            'command_idx':cmd_idx,
+                                                                            'command_name':command['name'],
+                                                                            'message':'Different field'})
 
 
+                    #for field_idx, field in enumerate(dword['fields']):
+                    #    if pre_fields_index >= len(pre_fields):
+                    #        index_old, index_new = 0, 0
+
+                    #    if command['name'] == 'MI_BATCH_BUFFER_START_CMD' and 'obj_fields' in field:
+                    #        for obj_field_idx, obj_field in enumerate(field['obj_fields']):
+                    #            if not check:
+                    #                obj_field['CHECK'] = 'N'
+                    #                continue
+                    #            if obj_field['obj_field_name'].startswith('Reserved'):
+                    #                continue
+                    #            if pre_fields[pre_fields_index].tag != obj_field['obj_field_name']:
+                    #                if same_command_content:
+                    #                    same_command_content = False
+                    #                    self.differentCommandContent.append({'frame_idx':frame_idx,
+                    #                                                        'command_idx':cmd_idx,
+                    #                                                        'command_name':command['name'],
+                    #                                                        'message':'Update command with different field'})
+                    #                continue
+                    #            obj_field['CHECK'] = pre_fields[pre_fields_index].attrib['CHECK']
+                    #        continue
+                    #    if not check:
+                    #        field['CHECK'] = 'N'
+                    #    else:
+                    #        if pre_fields_index >= len(pre_fields):
+                    #            break
+                    #        if field['field_name'].startswith('Reserved'):
+                    #            if same_command_content:
+                    #                ssame_command_content = False
+                    #                self.differentCommandContent.append({'frame_idx':frame_idx,
+                    #                                                        'command_idx':cmd_idx,
+                    #                                                        'command_name':command['name'],
+                    #                                                        'message':'Update command with different field'})
+                    #            continue
+                    #        if pre_fields[pre_fields_index].tag != field['field_name']:
+                    #            continue
+                    #        field['CHECK'] = pre_fields[pre_fields_index].attrib['CHECK']
+                    #        pre_fields_index += 1
+        if self.differentCommandContent:
+            msgBox = QMessageBox()
+            msgBox.setWindowTitle('Conflict area')
+            message = ""
+            for item in self.differentCommandContent:
+                message += 'frame ' + str(item['frame_idx']) + " command " + str(item['command_idx']) + " " + item['command_name'] + ":" + item['message'] + "\n"
+            msgBox.setInformativeText(message)
+            msgBox.exec_()
         #for frame_idx, frame in enumerate(frames):
         #    for cmd_idx, cmd in enumerate(frame):
         #        self.command_info[frame_idx][cmd_idx]['CHECK'] = cmd.attrib['check']
@@ -1844,8 +2014,9 @@ class FormCommandInfo(QWidget):
 
         
     def update_special_command(self):
-        if not self.main_window.command_info:
+        if not self.main_window.command_info or not self.ui.treeWidgetCmd.topLevelItem(0):
             return
+
         for index, area in enumerate(self.specialareas):
             if (area[0].checkState() == Qt.CheckState.Checked and area[1] == False) or (area[0].checkState() == Qt.CheckState.Unchecked and area[1] == True):
                 cmd_name = area[2]
@@ -1869,7 +2040,7 @@ class FormCommandInfo(QWidget):
 
 
     def update_special_field(self):
-        if not self.main_window.command_info:
+        if not self.main_window.command_info or not self.ui.treeWidgetCmd.topLevelItem(0):
             return
         for index, area in enumerate(self.specialareas):
             if (area[0].checkState() == Qt.CheckState.Checked and area[1] == False) or (area[0].checkState() == Qt.CheckState.Unchecked and area[1] == True):
@@ -2438,6 +2609,30 @@ class Addpath(QWidget):
     @Slot()
     def Close(self):
         pass
+
+class UpdateConflictInfo(QWidget):
+    def __init__(self, main_window):
+        super(UpdateConflictInfo, self).__init__()
+        self.ui = Ui_UpdateConflictInfo()
+        self.ui.setupUi(self)
+        self.main_window = main_window
+
+        self.ui.pushButtonUpdate.clicked.connect(self.update)
+        self.ui.pushButtonDiscard.clicked.connect(self.discard)
+    
+    def load_info(self):
+        self.main_window.setSpecialCommandCheckState()
+        self.main_window.show_command_info()
+        self.main_window.form.showcmdlist()
+        self.main_window.update_cmd_check_state = True
+        self.close()
+
+    def update(self):
+        self.main_window.loadCheckState()
+        self.load_info()
+
+    def discard(self):
+        self.load_info()
 
 
 
