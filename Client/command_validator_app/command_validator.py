@@ -74,9 +74,6 @@ class MainWindow(QMainWindow):
         self.ui.comboBoxPlatform.currentTextChanged.connect(partial(self.selectbox,'Platform'))
         self.ui.comboBoxComponent.currentTextChanged.connect(partial(self.selectbox,'Component'))
         
-        self.ui.lineEditTestName.setText('EncodeHevcCQP')
-
-
         self.ui.tabWidget.setCurrentIndex(0)
         self.ui.FrameNum_input.setReadOnly(True)
         self.ui.lineEditFrame.setReadOnly(True)
@@ -311,17 +308,19 @@ class MainWindow(QMainWindow):
         else:
             checkBox.setCheckState(Qt.CheckState.Checked)
         if index == 0:
-            if self.conflictCheckBox[row][index].checkState(0) == Qt.CheckState.Checked:
+            if self.conflictCheckBox[row][index].checkState() == Qt.CheckState.Checked:
                 self.differentCommandList[row]['use'] = 'old'
             else:
                 self.differentCommandList[row]['use'] = 'new'
         else:
-            if self.conflictCheckBox[row][index].checkState(0) == Qt.CheckState.Checked:
+            if self.conflictCheckBox[row][index].checkState() == Qt.CheckState.Checked:
                 self.differentCommandList[row]['use'] = 'new'
             else:
                 self.differentCommandList[row]['use'] = 'old'
 
     def showUpdateConflictInfo(self):
+        self.ignoreConflictCheckBox = {}
+        self.conflictCheckBox = []
         self.UpdateConflictInfo.show()
         self.UpdateConflictInfo.activateWindow()
         table = self.UpdateConflictInfo.ui.tableWidget

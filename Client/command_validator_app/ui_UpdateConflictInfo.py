@@ -40,10 +40,10 @@ class Ui_UpdateConflictInfo(object):
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.pushButtonDiscard = QtWidgets.QPushButton(UpdateConflictInfo)
         self.pushButtonDiscard.setObjectName("pushButtonDiscard")
-        self.horizontalLayout.addWidget(self.pushButtonDiscard)
+        self.horizontalLayout.addWidget(self.pushButtonDiscard, alignment=QtCore.Qt.AlignHCenter)
         self.pushButtonUpdate = QtWidgets.QPushButton(UpdateConflictInfo)
         self.pushButtonUpdate.setObjectName("pushButtonUpdate")
-        self.horizontalLayout.addWidget(self.pushButtonUpdate)
+        self.horizontalLayout.addWidget(self.pushButtonUpdate, alignment=QtCore.Qt.AlignHCenter)
         self.verticalLayout.addLayout(self.horizontalLayout)
         self.gridLayout.addLayout(self.verticalLayout, 0, 0, 1, 1)
 
