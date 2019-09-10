@@ -500,7 +500,7 @@ class CmdFinder(object):
                                                                     #complement undefined dword length, for unmapped buffer stream
                                                             current_group = dword_group
                                                     if unionorcmd.tag == 'otherCMD' and 'otherCMD' in unionorcmd.attrib:
-                                                        node, dw_no = self.findcmd(node, unionorcmd.attrib['otherCMD'], value_list, dw_no, contentNode)
+                                                        node, dw_no = self.findcmd(node, unionorcmd.attrib['otherCMD'], value_list, dw_no, content)
                                                 base_dw_no = dw_no
                                             return node, dw_no
         return None, None
