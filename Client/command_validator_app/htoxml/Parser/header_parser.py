@@ -1,6 +1,7 @@
 from xml.etree.ElementTree import (
     Element, SubElement, tostring, XML,
 )
+import xml.etree.ElementTree as ET
 from ElementTree_pretty import prettify
 import os
 import re
@@ -193,6 +194,7 @@ class HeaderParser(object):
 
         #
         content = Element('content')
+        content.set('file', self.name)
         current_group = content
 
         #init
@@ -252,7 +254,7 @@ class HeaderParser(object):
             #parse pre-defined parts
             if line_clr.startswith('#include'):
                 self.includes.add(line_clr[10:-1])
-                continue 
+                continue
 
             elif line_clr.startswith('#'): 
                 self.elpredef.add(line_clr[1:])
