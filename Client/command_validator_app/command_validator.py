@@ -1449,6 +1449,42 @@ FrameNum = ([a-zA-Z0-9_\-]*)
             self.ui.lineEditRinginfoPath.setText(dir)
             self.fillframenum('Main')
 
+    def fixDefaultValueError(self):
+        for frame in self.command_info:
+            for command in frame:
+                for dword in command['dwords']:
+                    if 'value' not in dword or not dword['value']:
+                        continue
+                    dwordValue = dword['value']
+                    for field in dword['fields']:
+                        if 'obj_fields' in field:
+                            objValue = field['value']
+                            for obj_field in field['obj_fields']:
+                                low = int(obj_field['bitfield_l'])
+                                high = int(obj_field['bitfield_h'])
+                                value = int(objValue, 16) >> low
+                                base = (1 << (high-low + 1)) - 1
+                                value = value & base
+                                value = str(hex(value))
+                                if value != obj_field['default_value']:
+                                    obj_field['default_value'] = value
+                                    obj_field['max_value'] = value
+                                    obj_field['min_value'] = value
+                                    obj_field['value'] = value
+                        else:
+                            low = int(field['bitfield_l'])
+                            high = int(field['bitfield_h'])
+                            value = int(dwordValue, 16) >> low
+                            base = (1 << (high-low + 1)) - 1
+                            value = value & base
+                            value = str(hex(value))
+                            if value != field['default_value']:
+                                field['default_value'] = value
+                                field['max_value'] = value
+                                field['min_value'] = value
+                                field['value'] = value
+                            
+
     @Slot()
     def input_goru(self):
         # click OK, generate xml header
@@ -1480,6 +1516,8 @@ FrameNum = ([a-zA-Z0-9_\-]*)
             self.ui.logBrowser.append("Generate input file: %s\n" %self.inputfilename)
             self.parse_command_file()
             self.read_command_info_from_xml(False)        
+            self.command_info = self.split_dword()
+            self.fixDefaultValueError()
             if self.sameTest:
                 if self.sameCommandList():
                     if self.differentCommandList:
@@ -2083,7 +2121,7 @@ class FormCommandInfo(QWidget):
             if not table.item(i, 2):
                 continue
             if table.cellWidget(i, 7) and table.cellWidget(i, 7).isChecked():
-                command = self.info[int(self.row_command_map[i]['frame_idx'])][int(self.row_command_map[i]['command_idx'])]
+                command = self.main_window.command_info[int(self.row_command_map[i]['frame_idx'])][int(self.row_command_map[i]['command_idx'])]
                 dword = 'dword' + command['dwords'][int(self.row_command_map[i]['dword_idx'])]['NO']
                 field = table.item(i, 2).text()
                 value = self.item_text_to_dec(table.item(i, 6).text())
