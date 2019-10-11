@@ -308,3 +308,19 @@ Extract cmd infomation from bspec, and save into xml.
 ## cpp_parser.py
 
 Convert mhw cpp files to xml
+
+##Method to dump DDI
+1.Update driver if needed.Find build version on http://ubit-gfx.intel.com/dashboard;jsessionid=1mbrzxjrpc1zt1fzhq6igabjh8 and download Driver-Release-Internal-64-bit.7z. For reference about how to update driver, goto https://wiki.ith.intel.com/display/MediaWiki/Media+Driver+Debug+BKM#MediaDriverDebugBKM-HowtoinstallIntelGraphicsDriver?
+
+2.We need to get csv file.Run test on https://gta.intel.com/#/testplanning/plan/. In configuration window, build version should be chosen and select execution client should set to 2-gtax_gcmxd_fm. After test are completed, enter tests->Logs->Service and choose csv in File list. Csv should be downloaded automatically.
+
+3.Download resource on Artifactory(https://gfx-assets.fm.intel.com/artifactory/webapp/#/home). Source name is in 'File' column in csv file. For example, If need to run 'lucas.exe -s xxx.csv 001.', then File corresponding to 001 in Test ID needs to be downloaded
+
+4.Download lucas from https://gfx-assets.sh.intel.com/artifactory/gfx-media-assets-fm/testapps/Lucas/ci/Win64/ and unzip. Put csv and resource downloaded from above steps into lucas root folder.
+
+5.Set CodelHal Output directory in Registry to your own path, such as.[HKEY_CURRENT_USER\Software\Intel\Display\DXVA]
+"CodecHal Debug Output Directory"="C:\\Users\\gta\\Desktop\\codechal_dump"
+
+6.Download CodecDbgSetting.cfg from https://wiki.ith.intel.com/pages/viewpage.action?pageId=1235815667. Remove comment for PicParams,SlcParams,SeqParams in encode region. Put cfg under CodecHal Debug Output Directory set in step 5.
+
+7.Open PowerShell in lucas root, run command like '.\lucas.exe -s .\TGLLP_PostSI_HEVC_VDEnc_TEDDI_CQP_Tiling_Scala.csv 101.HEVC.VME.TEDDI.CQP.SCAL'. DDI output will be generated in CodecHal Debug Output Directory
