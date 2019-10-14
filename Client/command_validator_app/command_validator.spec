@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['command_validator.py'],
-             pathex=['C:\\projects\\github\\AutoULTGen\\Client\\command_validator_app'],
+             pathex=['C:\\Users\\lingsun\\Documents\\project\\AutoULTGen\\client\\command_validator_app'],
              binaries=[],
              datas=[],
              hiddenimports=[],
